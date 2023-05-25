@@ -8,34 +8,122 @@ use Illuminate\Http\Request;
 use Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
+use OpenApi\Annotations as OA;
+use Laravel\Sanctum\Sanctum;
+
 
 class ProductsController extends Controller
 {
+
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
+     * @OA\PathItem(
+     *   path="/api/products",
+     *   @OA\Get(
+     *     tags={"Products"},
+     *     summary="Get Products List",
+     *     description="Get Products List",
+     *     security={
+     *       {"sanctum": {}}
+     *     },
+     *     @OA\Response(
+     *       response=200,
+     *       description="Success"
+     *     ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Not found"
+     *      ),
+     *   )
+     * )
+    */
+
+    public function index(Request $request)
     {
-        $products = Product::all();
+        Sanctum::actingAs($request->user());
+        $product        = Product::all();        
+        $appUrl         = url('/');
+        $productData    = [];
+        foreach ($product as $item) {
+            $image = $item->image != null ? "$appUrl/storage/products/$item->image" : " ";
+        
+            $productData[] = [
+                "id"            => $item->id,
+                "name_products" => $item->name_products,
+                "description"   => $item->description,
+                "image"         => $image
+            ];
+        }
         return response()->json([
             "success"   => true,
             "message"   => "Product List",
-            "data"      => $products
+            "data"      => $productData
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
+     * @OA\PathItem(
+     *   path="/api/products",
+     *   @OA\Post(
+     *     tags={"Products"},
+     *     summary="Post Products",
+     *     description="Post Products",
+     *     security={
+     *         {"sanctum": {}}
+     *     },
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name_products", "description", "image"},
+     *                 @OA\Property(
+     *                     property="name_products",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="description",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="image",
+     *                     type="file",
+     *                     format="binary"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not found"
+     *     )
+     *  )
+     * )
+    */
     public function store(Request $request)
     {
         $input      = $request->all();
@@ -63,17 +151,58 @@ class ProductsController extends Controller
 
         $product->image             = $slug;
         $product->save();
-        
+        $appUrl = url('/');
         return response()->json([
             "success"   => true,
             "message"   => "Product created successfully.",
-            "data"      => $product
+            "data"      => [
+                "id"            => $product->id,
+                "name_products" => $product->name_products,
+                "description"   => $product->description,
+                "image"         => $product->image != null ? "$appUrl/storage/products/$product->image" : ""
+            ]
         ]);
     }
 
-    /**
-     * Display the specified resource.
+   /**
+     * @OA\PathItem(
+     *   path="/api/products/show/{id}",
+     *   @OA\Get(
+     *     tags={"Products"},
+     *     summary="Show Products By Id",
+     *     description="Show Products By Id",
+     *     security={
+     *         {"sanctum": {}}
+     *     },
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the product",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not found"
+     *     )
+     *   )
+     * )
      */
+
     public function show(string $id)
     {
         $product = Product::find($id);
@@ -84,10 +213,16 @@ class ProductsController extends Controller
                 'success' => false
             ]);
         }
+        $appUrl = url('/');
         return response()->json([
-            "success" => true,
-            "message" => "Product retrieved successfully.",
-            "data" => $product
+            "success"   => true,
+            "message"   => "Product created successfully.",
+            "data"      => [
+                "id"            => $product->id,
+                "name_products" => $product->name_products,
+                "description"   => $product->description,
+                "image"         => $product->image != null ? "$appUrl/storage/products/$product->image" : ""
+            ]
         ]);
     }
 
@@ -100,9 +235,68 @@ class ProductsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+     * @OA\PathItem(
+     *   path="/api/products/edit/{id}",
+     * @OA\Post(
+    *     operationId="updateProduct",
+    *     tags={"Products"},
+    *     summary="Update a product",
+    *     description="Update a specific product by its ID",
+    *     security={
+    *         {"sanctum": {}}
+    *     },
+    *     @OA\Parameter(
+    *         name="id",
+    *         in="path",
+    *         required=true,
+    *         description="ID of the product to update",
+    *         @OA\Schema(
+    *             type="integer"
+    *         )
+    *     ),
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\MediaType(
+    *             mediaType="multipart/form-data",
+    *             @OA\Schema(
+    *                 required={"name_products", "description", "image"},
+    *                 @OA\Property(
+    *                     property="name_products",
+    *                     type="string"
+    *                 ),
+    *                 @OA\Property(
+    *                     property="description",
+    *                     type="string"
+    *                 ),
+    *                 @OA\Property(
+    *                     property="image",
+    *                     type="file",
+    *                     format="binary"
+    *                 )
+    *             )
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Success"
+    *     ),
+    *     @OA\Response(
+    *         response=400,
+    *         description="Bad Request"
+    *     ),
+    *     @OA\Response(
+    *         response=401,
+    *         description="Unauthenticated"
+    *     ),
+    *     @OA\Response(
+    *         response=404,
+    *         description="Not found"
+    *     )
+    * )
+     * )
+    */
+    
+    public function update(Request $request, $id)
     {
         $input = $request->all();
 
@@ -120,8 +314,7 @@ class ProductsController extends Controller
             ]);
         }
         
-
-        $product                = Product::find($id);
+        $product                = Product::findOrFail($id);
         $product->name_products = $request->name_products;
         $product->description   = $request->description;
 
@@ -136,26 +329,74 @@ class ProductsController extends Controller
             $product->image             = $slug;
         }
         $product->save();
-
-
+        $appUrl = url('/');
         return response()->json([
             "success"   => true,
-            "message"   => "Product updated successfully.",
-            "data"      => $product
+            "message"   => "Product created successfully.",
+            "data"      => [
+                "id"            => $product->id,
+                "name_products" => $product->name_products,
+                "description"   => $product->description,
+                "image"         => $product->image != null ? "$appUrl/storage/products/$product->image" : ""
+            ]
         ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\PathItem(
+     *   path="/api/products/delete/{id}",
+     *   @OA\Delete(
+     *     tags={"Products"},
+     *     summary="Delete Products",
+     *     description="Delete Products",
+     *     security={
+     *         {"sanctum": {}}
+     *     },
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the product",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not found"
+     *     )
+     *   )
+     * )
      */
     public function destroy(string $id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $product->delete();
+        $path = public_path("storage/products/{$product->image}");
+        File::delete($path);
+        $appUrl = url('/');
+
         return response()->json([
             "success"   => true,
             "message"   => "Product deleted successfully.",
-            "data"      => $product
+            "data"      => [
+                "id"            => $product->id,
+                "name_products" => $product->name_products,
+                "description"   => $product->description,
+                "image"         => $product->image != null ? "$appUrl/storage/products/$product->image" : ""
+            ]
         ]);
     }
 }
