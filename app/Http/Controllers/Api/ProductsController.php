@@ -126,7 +126,6 @@ class ProductsController extends Controller
     */
     public function store(Request $request)
     {
-        $input      = $request->all();
         $validator  = Validator::make($request->all(), [
             'name_products' => 'required',
             'description'   => 'required',
@@ -166,7 +165,7 @@ class ProductsController extends Controller
 
    /**
      * @OA\PathItem(
-     *   path="/api/products/show/{id}",
+     *   path="/api/products/{id}",
      *   @OA\Get(
      *     tags={"Products"},
      *     summary="Show Products By Id",
@@ -236,7 +235,7 @@ class ProductsController extends Controller
 
     /**
      * @OA\PathItem(
-     *   path="/api/products/edit/{id}",
+     *   path="/api/products/{id}",
      * @OA\Post(
     *     operationId="updateProduct",
     *     tags={"Products"},
@@ -298,9 +297,7 @@ class ProductsController extends Controller
     
     public function update(Request $request, $id)
     {
-        $input = $request->all();
-
-        $validator = Validator::make($input, [
+        $validator  = Validator::make($request->all(), [
             'name_products' => 'required',
             'description'   => 'required',
             'image'         => 'required|mimes:jpg,png,jpeg,gif,svg',
@@ -344,7 +341,7 @@ class ProductsController extends Controller
 
     /**
      * @OA\PathItem(
-     *   path="/api/products/delete/{id}",
+     *   path="/api/products/{id}",
      *   @OA\Delete(
      *     tags={"Products"},
      *     summary="Delete Products",

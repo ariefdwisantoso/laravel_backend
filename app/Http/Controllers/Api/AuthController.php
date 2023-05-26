@@ -109,9 +109,6 @@ class AuthController extends Controller
      *     tags={"Auth"},
      *     summary="Login User",
      *     description="Login User",
-     *     security={
-     *         {"sanctum": {}}
-     *     },
      *      @OA\Parameter(
      *          name="email",
      *          in="query",

@@ -103,12 +103,7 @@
                     "404": {
                         "description": "Not found"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
         "/api/products": {
@@ -194,7 +189,7 @@
                 ]
             }
         },
-        "/api/products/show/{id}": {
+        "/api/products/{id}": {
             "get": {
                 "tags": [
                     "Products"
@@ -232,9 +227,7 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/api/products/edit/{id}": {
+            },
             "post": {
                 "tags": [
                     "Products"
@@ -299,9 +292,7 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/api/products/delete/{id}": {
+            },
             "delete": {
                 "tags": [
                     "Products"
